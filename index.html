@@ -478,12 +478,11 @@
         </section>
     </div>
 
-    <!-- Minimal Subtle Visitor Counter Footer (ข้อความจางๆ ล่างสุด) -->
+    <!-- Minimal Real-time Visitor Counter Footer (ดึงยอดจริงผ่าน API ฟรี) -->
     <footer class="mt-8 pt-4 pb-2 text-center text-[11px] text-slate-400 font-light select-none no-print">
-        <div class="flex items-center justify-center gap-3">
-            <span><i class="fa-solid fa-users text-[10px] mr-1 opacity-70"></i>เข้าชมวันนี้: <strong id="visitor-today-count" class="font-semibold text-slate-500">1</strong></span>
-            <span class="opacity-30">|</span>
-            <span><i class="fa-solid fa-eye text-[10px] mr-1 opacity-70"></i>รวมทั้งหมด: <strong id="visitor-total-count" class="font-semibold text-slate-500">1</strong> ครั้ง</span>
+        <div class="flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-eye text-[10px] opacity-70"></i>
+            <span>จำนวนเข้าชมทั้งหมด: <strong id="realtime-visitor-count" class="font-semibold text-slate-500">...</strong> ครั้ง</span>
         </div>
     </footer>
 
@@ -635,7 +634,7 @@
             renderCalendar();
             renderTable();
             updateStats();
-            updateVisitorCounter();
+            fetchRealtimeVisitorCount();
 
             // iOS Touch & Click Listener for Dropdown
             const btn = document.getElementById('dropdownBtn');
@@ -655,27 +654,26 @@
             }
         };
 
-        // Visitor Counter System
-        function updateVisitorCounter() {
-            const todayStr = formatDate(new Date());
-            let totalVisits = parseInt(localStorage.getItem('intern_total_visits') || '0');
-            let todayVisits = parseInt(localStorage.getItem('intern_today_visits') || '0');
-            let lastVisitDate = localStorage.getItem('intern_last_visit_date');
+        // Fetch Real-time Visitor Counter using Free CountAPI
+        function fetchRealtimeVisitorCount() {
+            // Namespace URL ป้องกันซ้ำด้วยชื่อเว็บเฉพาะ
+            const namespace = "intern-log-system-blip-github-io";
+            const key = "visits";
+            const url = `https://api.countapi.xyz/hit/${namespace}/${key}`;
 
-            // Reset Today Counter if Date Changed
-            if (lastVisitDate !== todayStr) {
-                todayVisits = 0;
-                localStorage.setItem('intern_last_visit_date', todayStr);
-            }
-
-            totalVisits++;
-            todayVisits++;
-
-            localStorage.setItem('intern_total_visits', totalVisits);
-            localStorage.setItem('intern_today_visits', todayVisits);
-
-            document.getElementById('visitor-total-count').innerText = totalVisits.toLocaleString();
-            document.getElementById('visitor-today-count').innerText = todayVisits.toLocaleString();
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.value) {
+                        document.getElementById('realtime-visitor-count').innerText = data.value.toLocaleString();
+                    } else {
+                        document.getElementById('realtime-visitor-count').innerText = "1";
+                    }
+                })
+                .catch(() => {
+                    // สำรองกรณีเครือข่ายขัดข้อง
+                    document.getElementById('realtime-visitor-count').innerText = "1";
+                });
         }
 
         function initCutoffDropdownOptions() {
