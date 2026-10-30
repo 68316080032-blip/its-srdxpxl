@@ -140,9 +140,9 @@
         }
     </style>
 </head>
-<body class="p-3 sm:p-6 min-h-screen">
+<body class="p-3 sm:p-6 min-h-screen flex flex-col justify-between">
 
-    <div class="max-w-7xl mx-auto space-y-5">
+    <div class="max-w-7xl mx-auto space-y-5 w-full">
 
         <!-- Header Bar -->
         <header class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between relative z-40">
@@ -478,6 +478,15 @@
         </section>
     </div>
 
+    <!-- Minimal Subtle Visitor Counter Footer (ข้อความจางๆ ล่างสุด) -->
+    <footer class="mt-8 pt-4 pb-2 text-center text-[11px] text-slate-400 font-light select-none no-print">
+        <div class="flex items-center justify-center gap-3">
+            <span><i class="fa-solid fa-users text-[10px] mr-1 opacity-70"></i>เข้าชมวันนี้: <strong id="visitor-today-count" class="font-semibold text-slate-500">1</strong></span>
+            <span class="opacity-30">|</span>
+            <span><i class="fa-solid fa-eye text-[10px] mr-1 opacity-70"></i>รวมทั้งหมด: <strong id="visitor-total-count" class="font-semibold text-slate-500">1</strong> ครั้ง</span>
+        </div>
+    </footer>
+
     <!-- Pop-up: Yellow Book Bottom Page Summary Modal -->
     <div id="yellowBookModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
         <div class="bg-slate-900/90 backdrop-blur-xl w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4 border border-white/10 text-white">
@@ -519,7 +528,7 @@
             <!-- Cutoff Day Dropdown Picker Inside Modal -->
             <div class="flex items-center justify-between bg-white/5 p-2.5 rounded-2xl border border-white/10 text-xs">
                 <label for="cutoffDaySelect" class="text-slate-300 font-medium flex items-center gap-1.5">
-                    <i class="fa-solid fa-calendar-day text-sky-400"></i> วันที่ตัดรอบ:
+                    <i class="fa-solid fa-calendar-day text-sky-400"></i> วันที่ตัดรอบเงินออก:
                 </label>
                 <select id="cutoffDaySelect" onchange="updateCutoffDaySetting()" class="bg-slate-800 text-emerald-400 font-bold px-2.5 py-1 rounded-xl outline-none border border-slate-700 cursor-pointer">
                 </select>
@@ -626,6 +635,7 @@
             renderCalendar();
             renderTable();
             updateStats();
+            updateVisitorCounter();
 
             // iOS Touch & Click Listener for Dropdown
             const btn = document.getElementById('dropdownBtn');
@@ -644,6 +654,29 @@
                 });
             }
         };
+
+        // Visitor Counter System
+        function updateVisitorCounter() {
+            const todayStr = formatDate(new Date());
+            let totalVisits = parseInt(localStorage.getItem('intern_total_visits') || '0');
+            let todayVisits = parseInt(localStorage.getItem('intern_today_visits') || '0');
+            let lastVisitDate = localStorage.getItem('intern_last_visit_date');
+
+            // Reset Today Counter if Date Changed
+            if (lastVisitDate !== todayStr) {
+                todayVisits = 0;
+                localStorage.setItem('intern_last_visit_date', todayStr);
+            }
+
+            totalVisits++;
+            todayVisits++;
+
+            localStorage.setItem('intern_total_visits', totalVisits);
+            localStorage.setItem('intern_today_visits', todayVisits);
+
+            document.getElementById('visitor-total-count').innerText = totalVisits.toLocaleString();
+            document.getElementById('visitor-today-count').innerText = todayVisits.toLocaleString();
+        }
 
         function initCutoffDropdownOptions() {
             const select = document.getElementById('cutoffDaySelect');
