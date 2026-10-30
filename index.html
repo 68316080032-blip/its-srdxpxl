@@ -248,16 +248,8 @@
             </div>
         </section>
 
-        <!-- Summary Statistics Badges (Month Selected) -->
-        <section class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 sm:gap-3">
-            <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] font-medium text-slate-500">บันทึกทั้งหมด</p>
-                    <p id="stat-total" class="text-lg font-bold text-slate-800 mt-0.5">0 <span class="text-[10px] font-normal text-slate-400">วัน</span></p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm"><i class="fa-solid fa-clipboard-list"></i></div>
-            </div>
-
+        <!-- Perfect 4-Card Grid Layout (2x2 on Mobile, 4 in row on Desktop) -->
+        <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             <div class="bg-white p-3 rounded-2xl border border-emerald-100 shadow-2xs flex items-center justify-between">
                 <div>
                     <p class="text-[11px] font-medium text-emerald-600">มาฝึกงาน</p>
@@ -268,18 +260,10 @@
 
             <div class="bg-white p-3 rounded-2xl border border-orange-100 shadow-2xs flex items-center justify-between">
                 <div>
-                    <p class="text-[11px] font-medium text-orange-600">ลากิจ</p>
-                    <p id="stat-leave-personal" class="text-lg font-bold text-orange-600 mt-0.5">0 <span class="text-[10px] font-normal text-orange-400">วัน</span></p>
+                    <p class="text-[11px] font-medium text-orange-600">วันลา (กิจ/ป่วย)</p>
+                    <p id="stat-leave" class="text-lg font-bold text-orange-600 mt-0.5">0 <span class="text-[10px] font-normal text-orange-400">วัน</span></p>
                 </div>
                 <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center text-sm"><i class="fa-solid fa-user-pen"></i></div>
-            </div>
-
-            <div class="bg-white p-3 rounded-2xl border border-amber-100 shadow-2xs flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] font-medium text-amber-600">ลาป่วย</p>
-                    <p id="stat-leave-sick" class="text-lg font-bold text-amber-600 mt-0.5">0 <span class="text-[10px] font-normal text-amber-400">วัน</span></p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-notes-medical"></i></div>
             </div>
 
             <div class="bg-white p-3 rounded-2xl border border-rose-100 shadow-2xs flex items-center justify-between">
@@ -290,7 +274,7 @@
                 <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm"><i class="fa-solid fa-user-large-slash"></i></div>
             </div>
 
-            <div class="bg-white p-3 rounded-2xl border border-purple-100 shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1">
+            <div class="bg-white p-3 rounded-2xl border border-purple-100 shadow-2xs flex items-center justify-between">
                 <div>
                     <p class="text-[11px] font-medium text-purple-600">วันหยุด</p>
                     <p id="stat-holiday" class="text-lg font-bold text-purple-600 mt-0.5">0 <span class="text-[10px] font-normal text-purple-400">วัน</span></p>
@@ -978,18 +962,16 @@
                 .filter(dateStr => dateStr.startsWith(currentMonthPrefix))
                 .map(dateStr => logsData[dateStr]);
 
-            const total = monthlyEntries.length;
             const present = monthlyEntries.filter(e => e.status === 'present' || e.status === 'swap').length;
             const leavePersonal = monthlyEntries.filter(e => e.status === 'leave-personal' || e.status === 'leave').length;
             const leaveSick = monthlyEntries.filter(e => e.status === 'leave-sick').length;
+            const totalLeave = leavePersonal + leaveSick;
             const absent = monthlyEntries.filter(e => e.status === 'absent').length;
             const holiday = monthlyEntries.filter(e => e.status === 'holiday').length;
 
-            // Update Stat Badges
-            document.getElementById('stat-total').innerHTML = `${total} <span class="text-xs font-normal text-slate-400">วัน</span>`;
+            // Update 4 Balanced Stat Badges
             document.getElementById('stat-present').innerHTML = `${present} <span class="text-xs font-normal text-emerald-400">วัน</span>`;
-            document.getElementById('stat-leave-personal').innerHTML = `${leavePersonal} <span class="text-xs font-normal text-orange-400">วัน</span>`;
-            document.getElementById('stat-leave-sick').innerHTML = `${leaveSick} <span class="text-xs font-normal text-amber-400">วัน</span>`;
+            document.getElementById('stat-leave').innerHTML = `${totalLeave} <span class="text-xs font-normal text-orange-400">วัน</span>`;
             document.getElementById('stat-absent').innerHTML = `${absent} <span class="text-xs font-normal text-rose-400">วัน</span>`;
             document.getElementById('stat-holiday').innerHTML = `${holiday} <span class="text-xs font-normal text-purple-400">วัน</span>`;
 
