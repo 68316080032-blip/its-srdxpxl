@@ -165,7 +165,7 @@
                     
                     <!-- Real-time Visitor & Online Badges -->
                     <div class="flex items-center gap-3 mt-1 text-xs">
-                        <span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                        <span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
                             <span class="relative flex h-2 w-2">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -173,7 +173,7 @@
                             กำลังใช้งาน: <strong id="online-users-count" class="font-bold">1</strong> คน
                         </span>
 
-                        <span class="inline-flex items-center gap-1.5 text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-full">
+                        <span class="inline-flex items-center gap-1.5 text-slate-500 font-medium bg-slate-100 px-2.5 py-0.5 rounded-full">
                             <i class="fa-solid fa-eye text-blue-500 text-[10px]"></i>
                             เข้าชมรวม: <strong id="header-total-views" class="text-slate-700 font-bold">...</strong> ครั้ง
                         </span>
@@ -598,9 +598,8 @@
         <span id="toast-message">บันทึกข้อมูลเรียบร้อยแล้ว</span>
     </div>
 
-    <!-- Firebase Realtime Database SDKs for True Realtime Online Users -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Lightweight WebSocket Realtime Tracking Engine -->
+    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
 
     <script>
         // Service Worker for PWA
@@ -662,12 +661,10 @@
             renderCalendar();
             renderTable();
             updateStats();
-            
-            // Fetch All-time Total Views Counter
-            fetchTotalViewsCounter();
 
-            // Initialize True Online Presence Tracking via Firebase Public Demo Node
-            initOnlinePresenceTracker();
+            // Fetch Visitor Stats
+            fetchTotalViewsCounter();
+            initLiveOnlineTracker();
 
             // iOS Touch & Click Listener for Dropdown
             const btn = document.getElementById('dropdownBtn');
@@ -687,9 +684,9 @@
             }
         };
 
-        // 1. Fetch Total Visits Counter from CounterAPI.dev
+        // 1. Fetch Total Views Counter
         function fetchTotalViewsCounter() {
-            const apiKey = "intern-log-system-2026-v2"; 
+            const apiKey = "intern-log-system-2026-v3";
             const url = `https://api.counterapi.dev/v1/${apiKey}/visits/up`;
 
             fetch(url)
@@ -705,35 +702,51 @@
                 });
         }
 
-        // 2. Track True Active Online Users via Firebase Realtime Database
-        function initOnlinePresenceTracker() {
+        // 2. Real-time Multi-Device Active Online Tracker
+        function initLiveOnlineTracker() {
             try {
-                // Public Anonymous Firebase Configuration
-                const firebaseConfig = {
-                    databaseURL: "https://online-presence-tracker-default-rtdb.asia-southeast1.firebasedatabase.app"
-                };
-
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
+                // Generate Unique Session ID for Each Device / Browser Tab
+                let sessionID = sessionStorage.getItem('intern_presence_sid');
+                if (!sessionID) {
+                    sessionID = 'sid_' + Math.random().toString(36).substr(2, 9);
+                    sessionStorage.setItem('intern_presence_sid', sessionID);
                 }
 
-                const db = firebase.database();
-                const roomRef = db.ref('online_users/intern_log_app');
-                const userRef = roomRef.push();
+                // Public Presence Hub using WebSocket Engine
+                const pusher = new Pusher('2862d37803e6ed822368', { cluster: 'ap1' });
+                const channel = pusher.subscribe('presence-intern-app-public');
 
-                // On connect/disconnect listener
-                db.ref('.info/connected').on('value', (snap) => {
-                    if (snap.val() === true) {
-                        userRef.onDisconnect().remove();
-                        userRef.set(true);
+                // Heartbeat to ping active connection every 15s
+                let activeCount = 1;
+
+                channel.bind('pusher:subscription_succeeded', function() {
+                    channel.trigger('client-ping', { id: sessionID });
+                });
+
+                // Count active device sessions dynamically
+                let activeSessions = new Set([sessionID]);
+
+                channel.bind('client-ping', function(data) {
+                    if (data && data.id) {
+                        activeSessions.add(data.id);
+                        document.getElementById('online-users-count').innerText = activeSessions.size;
                     }
                 });
 
-                // Realtime Online Count Update
-                roomRef.on('value', (snap) => {
-                    const onlineCount = snap.numChildren() || 1;
-                    document.getElementById('online-users-count').innerText = onlineCount;
-                });
+                // Periodic Broadcast
+                setInterval(() => {
+                    try {
+                        channel.trigger('client-ping', { id: sessionID });
+                    } catch(e) {}
+                }, 10000);
+
+                // Auto reset count cache periodically
+                setInterval(() => {
+                    activeSessions.clear();
+                    activeSessions.add(sessionID);
+                    document.getElementById('online-users-count').innerText = activeSessions.size;
+                }, 40000);
+
             } catch (err) {
                 document.getElementById('online-users-count').innerText = "1";
             }
