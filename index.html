@@ -150,39 +150,24 @@
         }
     </style>
 </head>
-<body class="p-3 sm:p-6 min-h-screen flex flex-col justify-between">
+<body class="p-3 sm:p-6 min-h-screen">
 
-    <div class="max-w-7xl mx-auto space-y-5 w-full">
+    <div class="max-w-7xl mx-auto space-y-5">
 
         <!-- Header Bar -->
-        <header class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-40">
+        <header class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between relative z-40">
             <div class="flex items-center gap-3.5">
                 <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center text-xl font-bold shadow-md shadow-blue-500/20">
                     <i class="fa-solid fa-book-bookmark"></i>
                 </div>
                 <div>
                     <h1 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">ระบบบันทึกการฝึกงานประจำวัน</h1>
-                    
-                    <!-- Real-time Visitor & Online Badges -->
-                    <div class="flex items-center gap-3 mt-1 text-xs">
-                        <span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
-                            <span class="relative flex h-2 w-2">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            กำลังใช้งาน: <strong id="online-users-count" class="font-bold">1</strong> คน
-                        </span>
-
-                        <span class="inline-flex items-center gap-1.5 text-slate-500 font-medium bg-slate-100 px-2.5 py-0.5 rounded-full">
-                            <i class="fa-solid fa-eye text-blue-500 text-[10px]"></i>
-                            เข้าชมรวม: <strong id="header-total-views" class="text-slate-700 font-bold">...</strong> ครั้ง
-                        </span>
-                    </div>
+                    <p class="text-xs text-slate-500 hidden sm:block">สรุปยอดมา ลา ขาด อัตโนมัติ พร้อมข้อมูลกรอกเล่มเหลือง</p>
                 </div>
             </div>
 
             <!-- Single Action Dropdown Menu -->
-            <div class="relative no-print self-end sm:self-auto">
+            <div class="relative no-print">
                 <button id="dropdownBtn" type="button" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl shadow-md transition flex items-center gap-2">
                     <i class="fa-solid fa-bars-staggered"></i>
                     <span>จัดการข้อมูล / เมนู</span>
@@ -503,13 +488,6 @@
         </section>
     </div>
 
-    <!-- Footer Bar -->
-    <footer class="mt-8 pt-4 pb-2 text-center text-[11px] text-slate-400 font-light select-none no-print">
-        <div class="flex items-center justify-center gap-2">
-            <span>เข้าชมสะสมทั้งหมด: <strong id="footer-total-views" class="font-semibold text-slate-500">...</strong> ครั้ง</span>
-        </div>
-    </footer>
-
     <!-- Pop-up: Yellow Book Bottom Page Summary Modal -->
     <div id="yellowBookModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
         <div class="bg-slate-900/90 backdrop-blur-xl w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4 border border-white/10 text-white">
@@ -598,9 +576,6 @@
         <span id="toast-message">บันทึกข้อมูลเรียบร้อยแล้ว</span>
     </div>
 
-    <!-- Lightweight WebSocket Realtime Tracking Engine -->
-    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
-
     <script>
         // Service Worker for PWA
         if ('serviceWorker' in navigator) {
@@ -662,10 +637,6 @@
             renderTable();
             updateStats();
 
-            // Fetch Visitor Stats
-            fetchTotalViewsCounter();
-            initLiveOnlineTracker();
-
             // iOS Touch & Click Listener for Dropdown
             const btn = document.getElementById('dropdownBtn');
             const dropdown = document.getElementById('actionDropdown');
@@ -683,74 +654,6 @@
                 });
             }
         };
-
-        // 1. Fetch Total Views Counter
-        function fetchTotalViewsCounter() {
-            const apiKey = "intern-log-system-2026-v3";
-            const url = `https://api.counterapi.dev/v1/${apiKey}/visits/up`;
-
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    const countVal = (data && data.count) ? data.count.toLocaleString() : "1";
-                    document.getElementById('header-total-views').innerText = countVal;
-                    document.getElementById('footer-total-views').innerText = countVal;
-                })
-                .catch(() => {
-                    document.getElementById('header-total-views').innerText = "1";
-                    document.getElementById('footer-total-views').innerText = "1";
-                });
-        }
-
-        // 2. Real-time Multi-Device Active Online Tracker
-        function initLiveOnlineTracker() {
-            try {
-                // Generate Unique Session ID for Each Device / Browser Tab
-                let sessionID = sessionStorage.getItem('intern_presence_sid');
-                if (!sessionID) {
-                    sessionID = 'sid_' + Math.random().toString(36).substr(2, 9);
-                    sessionStorage.setItem('intern_presence_sid', sessionID);
-                }
-
-                // Public Presence Hub using WebSocket Engine
-                const pusher = new Pusher('2862d37803e6ed822368', { cluster: 'ap1' });
-                const channel = pusher.subscribe('presence-intern-app-public');
-
-                // Heartbeat to ping active connection every 15s
-                let activeCount = 1;
-
-                channel.bind('pusher:subscription_succeeded', function() {
-                    channel.trigger('client-ping', { id: sessionID });
-                });
-
-                // Count active device sessions dynamically
-                let activeSessions = new Set([sessionID]);
-
-                channel.bind('client-ping', function(data) {
-                    if (data && data.id) {
-                        activeSessions.add(data.id);
-                        document.getElementById('online-users-count').innerText = activeSessions.size;
-                    }
-                });
-
-                // Periodic Broadcast
-                setInterval(() => {
-                    try {
-                        channel.trigger('client-ping', { id: sessionID });
-                    } catch(e) {}
-                }, 10000);
-
-                // Auto reset count cache periodically
-                setInterval(() => {
-                    activeSessions.clear();
-                    activeSessions.add(sessionID);
-                    document.getElementById('online-users-count').innerText = activeSessions.size;
-                }, 40000);
-
-            } catch (err) {
-                document.getElementById('online-users-count').innerText = "1";
-            }
-        }
 
         function initCutoffDropdownOptions() {
             const select = document.getElementById('cutoffDaySelect');
