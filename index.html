@@ -478,7 +478,7 @@
         </section>
     </div>
 
-    <!-- Minimal Real-time Visitor Counter Footer (ดึงยอดจริงผ่าน API ฟรี) -->
+    <!-- Minimal Real-time Visitor Counter Footer (ใช้ CounterAPI.dev เพื่อความเสถียร 100%) -->
     <footer class="mt-8 pt-4 pb-2 text-center text-[11px] text-slate-400 font-light select-none no-print">
         <div class="flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-eye text-[10px] opacity-70"></i>
@@ -654,24 +654,21 @@
             }
         };
 
-        // Fetch Real-time Visitor Counter using Free CountAPI
+        // Fetch Real-time Visitor Counter using CounterAPI.dev
         function fetchRealtimeVisitorCount() {
-            // Namespace URL ป้องกันซ้ำด้วยชื่อเว็บเฉพาะ
-            const namespace = "intern-log-system-blip-github-io";
-            const key = "visits";
-            const url = `https://api.countapi.xyz/hit/${namespace}/${key}`;
+            const apiKey = "intern-log-system-2026-v1"; 
+            const url = `https://api.counterapi.dev/v1/${apiKey}/visits/up`;
 
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    if (data && data.value) {
-                        document.getElementById('realtime-visitor-count').innerText = data.value.toLocaleString();
+                    if (data && data.count) {
+                        document.getElementById('realtime-visitor-count').innerText = data.count.toLocaleString();
                     } else {
                         document.getElementById('realtime-visitor-count').innerText = "1";
                     }
                 })
                 .catch(() => {
-                    // สำรองกรณีเครือข่ายขัดข้อง
                     document.getElementById('realtime-visitor-count').innerText = "1";
                 });
         }
