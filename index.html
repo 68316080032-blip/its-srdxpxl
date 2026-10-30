@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Intern - ระบบบันทึกการฝึกงานประจำวัน</title>
     
+    <!-- Google Analytics 4 (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2B48CHTWNE"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-2B48CHTWNE');
+    </script>
+
     <!-- PWA Settings for Mobile App -->
     <meta name="theme-color" content="#2563eb">
     <meta name="mobile-web-app-capable" content="yes">
@@ -145,19 +155,34 @@
     <div class="max-w-7xl mx-auto space-y-5 w-full">
 
         <!-- Header Bar -->
-        <header class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between relative z-40">
+        <header class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-40">
             <div class="flex items-center gap-3.5">
                 <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center text-xl font-bold shadow-md shadow-blue-500/20">
                     <i class="fa-solid fa-book-bookmark"></i>
                 </div>
                 <div>
                     <h1 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">ระบบบันทึกการฝึกงานประจำวัน</h1>
-                    <p class="text-xs text-slate-500 hidden sm:block">สรุปยอดมา ลา ขาด อัตโนมัติ พร้อมข้อมูลกรอกเล่มเหลือง</p>
+                    
+                    <!-- Real-time Visitor & Online Badges -->
+                    <div class="flex items-center gap-3 mt-1 text-xs">
+                        <span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            กำลังใช้งาน: <strong id="online-users-count" class="font-bold">1</strong> คน
+                        </span>
+
+                        <span class="inline-flex items-center gap-1.5 text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-full">
+                            <i class="fa-solid fa-eye text-blue-500 text-[10px]"></i>
+                            เข้าชมรวม: <strong id="header-total-views" class="text-slate-700 font-bold">...</strong> ครั้ง
+                        </span>
+                    </div>
                 </div>
             </div>
 
             <!-- Single Action Dropdown Menu -->
-            <div class="relative no-print">
+            <div class="relative no-print self-end sm:self-auto">
                 <button id="dropdownBtn" type="button" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl shadow-md transition flex items-center gap-2">
                     <i class="fa-solid fa-bars-staggered"></i>
                     <span>จัดการข้อมูล / เมนู</span>
@@ -478,11 +503,10 @@
         </section>
     </div>
 
-    <!-- Minimal Real-time Visitor Counter Footer (ใช้ CounterAPI.dev เพื่อความเสถียร 100%) -->
+    <!-- Footer Bar -->
     <footer class="mt-8 pt-4 pb-2 text-center text-[11px] text-slate-400 font-light select-none no-print">
-        <div class="flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-eye text-[10px] opacity-70"></i>
-            <span>จำนวนเข้าชมทั้งหมด: <strong id="realtime-visitor-count" class="font-semibold text-slate-500">...</strong> ครั้ง</span>
+        <div class="flex items-center justify-center gap-2">
+            <span>เข้าชมสะสมทั้งหมด: <strong id="footer-total-views" class="font-semibold text-slate-500">...</strong> ครั้ง</span>
         </div>
     </footer>
 
@@ -574,6 +598,10 @@
         <span id="toast-message">บันทึกข้อมูลเรียบร้อยแล้ว</span>
     </div>
 
+    <!-- Firebase Realtime Database SDKs for True Realtime Online Users -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script>
         // Service Worker for PWA
         if ('serviceWorker' in navigator) {
@@ -634,7 +662,12 @@
             renderCalendar();
             renderTable();
             updateStats();
-            fetchRealtimeVisitorCount();
+            
+            // Fetch All-time Total Views Counter
+            fetchTotalViewsCounter();
+
+            // Initialize True Online Presence Tracking via Firebase Public Demo Node
+            initOnlinePresenceTracker();
 
             // iOS Touch & Click Listener for Dropdown
             const btn = document.getElementById('dropdownBtn');
@@ -654,23 +687,56 @@
             }
         };
 
-        // Fetch Real-time Visitor Counter using CounterAPI.dev
-        function fetchRealtimeVisitorCount() {
-            const apiKey = "intern-log-system-2026-v1"; 
+        // 1. Fetch Total Visits Counter from CounterAPI.dev
+        function fetchTotalViewsCounter() {
+            const apiKey = "intern-log-system-2026-v2"; 
             const url = `https://api.counterapi.dev/v1/${apiKey}/visits/up`;
 
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    if (data && data.count) {
-                        document.getElementById('realtime-visitor-count').innerText = data.count.toLocaleString();
-                    } else {
-                        document.getElementById('realtime-visitor-count').innerText = "1";
-                    }
+                    const countVal = (data && data.count) ? data.count.toLocaleString() : "1";
+                    document.getElementById('header-total-views').innerText = countVal;
+                    document.getElementById('footer-total-views').innerText = countVal;
                 })
                 .catch(() => {
-                    document.getElementById('realtime-visitor-count').innerText = "1";
+                    document.getElementById('header-total-views').innerText = "1";
+                    document.getElementById('footer-total-views').innerText = "1";
                 });
+        }
+
+        // 2. Track True Active Online Users via Firebase Realtime Database
+        function initOnlinePresenceTracker() {
+            try {
+                // Public Anonymous Firebase Configuration
+                const firebaseConfig = {
+                    databaseURL: "https://online-presence-tracker-default-rtdb.asia-southeast1.firebasedatabase.app"
+                };
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+
+                const db = firebase.database();
+                const roomRef = db.ref('online_users/intern_log_app');
+                const userRef = roomRef.push();
+
+                // On connect/disconnect listener
+                db.ref('.info/connected').on('value', (snap) => {
+                    if (snap.val() === true) {
+                        userRef.onDisconnect().remove();
+                        userRef.set(true);
+                    }
+                });
+
+                // Realtime Online Count Update
+                roomRef.on('value', (snap) => {
+                    const onlineCount = snap.numChildren() || 1;
+                    document.getElementById('online-users-count').innerText = onlineCount;
+                });
+            } catch (err) {
+                document.getElementById('online-users-count').innerText = "1";
+            }
         }
 
         function initCutoffDropdownOptions() {
